@@ -1,7 +1,12 @@
+import json
+import re
 from urllib import parse
 
+import requests
 import scrapy
 from scrapy import Request
+
+from ArticleSpider.items import ArticlespiderItem
 
 
 class CnblogsSpider(scrapy.Spider):
@@ -16,7 +21,7 @@ class CnblogsSpider(scrapy.Spider):
         '''
         # url = response.xpath('// div[@id="news_list"] // h2[@class="news_entry"] / a / @href').extract()
         # url = response.css('#news_list .news_entry a::attr(href)').extract()
-        post_nodes = response.css('#news_list .news_block')
+        post_nodes = response.css('#news_list .news_block')[:1]
         for post_node in post_nodes:
             image_url = post_node.css('.entry_summary a img::attr(src)').extract_first('')
             post_url = post_node.css('.news_entry a::attr(href)').extract_first('')
@@ -36,4 +41,48 @@ class CnblogsSpider(scrapy.Spider):
         yield Request(url=parse.urljoin(response.url, next_url), callback=self.parse)
 
     def parse_detail(self, response):
-        pass
+        match_re = re.match(".*?(\d+)", response.url)
+        if match_re:
+            post_id = match_re.group(1)
+
+            article_item = ArticlespiderItem()
+            title = response.css("#news_title a::text").extract_first("")
+            create_date = response.css("#news_info .time::text").extract_first("")
+            match_re = re.match(".*?(\d+.*)", create_date)
+            if match_re:
+                create_date = match_re.group(1)
+            content = response.css("#news_content").extract()[0]
+            tag_list = response.css(".news_tags a::text").extract()
+            tags = ",".join(tag_list)
+
+            # html = requests.get(parse.urljoin(response.url, "/NewsAjax/GetAjaxNewsInfo?contentId={}".format(post_id)))
+            # j_data = json.loads(html.text)
+            # praise_nums = j_data["DiggCount"]
+            # fav_nums = j_data["TotalView"]
+            # comment_nums = j_data["CommentCount"]
+            article_item["title"] = title
+            article_item["create_date"] = create_date
+            article_item["content"] = content
+            article_item["tags"] = tags
+            article_item["url"] = response.url
+            if response.meta.get("front_image_url", ""):
+                article_item["front_image_url"] = [response.meta.get("front_image_url", "")]
+            else:
+                article_item["front_image_url"] = []
+
+            yield Request(url=parse.urljoin(response.url, "/NewsAjax/GetAjaxNewsInfo?contentId={}".format(post_id)),
+                          meta={"article_item": article_item}, callback=self.parse_nums)
+
+    def parse_nums(self, response):
+        j_data = json.loads(response.text)
+        article_item = response.meta.get("article_item", "")
+
+        praise_nums = j_data["DiggCount"]
+        fav_nums = j_data["TotalView"]
+        comment_nums = j_data["CommentCount"]
+
+        article_item["praise_nums"] = praise_nums
+        article_item["fav_nums"] = fav_nums
+        article_item["comment_nums"] = comment_nums
+
+        yield article_item
