@@ -6,7 +6,8 @@ import requests
 import scrapy
 from scrapy import Request
 
-from ArticleSpider.items import ArticlespiderItem
+from ArticleSpider.items import ArticleSpiderItem
+from ArticleSpider.utils import common
 
 
 class CnblogsSpider(scrapy.Spider):
@@ -45,13 +46,13 @@ class CnblogsSpider(scrapy.Spider):
         if match_re:
             post_id = match_re.group(1)
 
-            article_item = ArticlespiderItem()
+            article_item = ArticleSpiderItem()
             title = response.css("#news_title a::text").extract_first("")
             create_date = response.css("#news_info .time::text").extract_first("")
             match_re = re.match(".*?(\d+.*)", create_date)
             if match_re:
                 create_date = match_re.group(1)
-            content = response.css("#news_content").extract()[0]
+            content = response.css("#news_content").extract_first("")
             tag_list = response.css(".news_tags a::text").extract()
             tags = ",".join(tag_list)
 
@@ -84,5 +85,6 @@ class CnblogsSpider(scrapy.Spider):
         article_item["praise_nums"] = praise_nums
         article_item["fav_nums"] = fav_nums
         article_item["comment_nums"] = comment_nums
+        article_item["url_object_id"] = common.get_md5(response.meta.get("url", ""))
 
         yield article_item
