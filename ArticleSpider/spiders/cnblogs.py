@@ -22,7 +22,7 @@ class CnblogsSpider(scrapy.Spider):
         '''
         # url = response.xpath('// div[@id="news_list"] // h2[@class="news_entry"] / a / @href').extract()
         # url = response.css('#news_list .news_entry a::attr(href)').extract()
-        post_nodes = response.css('#news_list .news_block')[:1]
+        post_nodes = response.css('#news_list .news_block')[5:6]
         for post_node in post_nodes:
             image_url = post_node.css('.entry_summary a img::attr(src)').extract_first('')
             post_url = post_node.css('.news_entry a::attr(href)').extract_first('')

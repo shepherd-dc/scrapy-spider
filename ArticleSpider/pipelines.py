@@ -7,8 +7,10 @@
 import codecs
 import json
 
+import MySQLdb
 from scrapy.exporters import JsonItemExporter
 from scrapy.pipelines.images import ImagesPipeline
+from twisted.enterprise import adbapi
 
 
 class ArticleSpiderPipeline(object):
@@ -25,6 +27,64 @@ class ArticleImagePipeline(ImagesPipeline):
                 item['front_image_path'] = image_file_path
 
         return item
+
+
+class MysqlPipeline(object):
+    '''用mysqlclient同步写入数据库'''
+    def __init__(self):
+        self.connect = MySQLdb.connect('127.0.0.1', 'root', '123456', 'article_spider', charset='utf8', use_unicode=True)
+        self.cursor = self.connect.cursor()
+
+    def process_item(self, item, spider):
+        insert_sql = '''
+            insert into cnblogs_article(url_object_id, title, url, create_date, fav_nums)
+            values (%s, %s, %s, %s, %s)
+        '''
+        self.cursor.execute(insert_sql, (item["url_object_id"], item["title"], item["url"], item["create_date"], item["fav_nums"]))
+        self.connect.commit()
+
+
+class MysqlTwistedPipeline(object):
+    '''用twisted异步写入数据库'''
+    def __init__(self, dbpool):
+        self.dbpool = dbpool
+
+    @classmethod
+    def from_settings(cls, settings):
+        from MySQLdb.cursors import DictCursor
+        dbparms = dict(
+            host = settings["MYSQL_HOST"],
+            db = settings["MYSQL_DBNAME"],
+            user = settings["MYSQL_USER"],
+            passwd = settings["MYSQL_PASSWORD"],
+            charset = 'utf8',
+            cursorclass = DictCursor,
+            use_unicode = True
+        )
+        dbpool = adbapi.ConnectionPool("MySQLdb", **dbparms)
+
+        return cls(dbpool)
+
+    def process_item(self, item, spider):
+        # 使用twisted将mysql插入变成异步执行
+        query = self.dbpool.runInteraction(self.do_insert, item)
+        # 处理异常
+        query.addErrback(self.handle_error, item, spider)
+
+    def do_insert(self, cursor, item):
+        # 执行具体的插入
+        insert_sql = '''
+                    insert into cnblogs_article(url_object_id, title, url, create_date, fav_nums)
+                    values (%s, %s, %s, %s, %s)
+                '''
+        cursor.execute(
+            insert_sql,
+            (item["url_object_id"], item["title"], item["url"], item["create_date"], item["fav_nums"])
+        )
+
+    def handle_error(self, failure, item, spider):
+        # 处理异步插入的异常
+        print (failure)
 
 
 class JsonWithEncodingPipeline(object):
