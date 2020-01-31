@@ -37,9 +37,9 @@ class CnblogsSpider(scrapy.Spider):
         # if next_url == 'Next >':
         #     next_url = response.css('.pager a:last-child::attr(href)').extract_first('')
         #     yield Request(url=parse.urljoin(response.url, next_url))
-        next_url = response.xpath('// div[@class="pager"] // a[contains(text(), "Next >")] / @href').extract_first('')
-        # 递归调用parse（默认callback为parse）继续处理下一页列表url
-        yield Request(url=parse.urljoin(response.url, next_url), callback=self.parse)
+        # next_url = response.xpath('// div[@class="pager"] // a[contains(text(), "Next >")] / @href').extract_first('')
+        # # 递归调用parse（默认callback为parse）继续处理下一页列表url
+        # yield Request(url=parse.urljoin(response.url, next_url), callback=self.parse)
 
     def parse_detail(self, response):
         match_re = re.match(".*?(\d+)", response.url)
