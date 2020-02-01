@@ -20,5 +20,14 @@ def extract_num(text):
 
     return nums
 
+
+def date_convert(value):
+    match_re = re.match(".*?(\d+.*)", value)
+    if match_re:
+        return match_re.group(1)
+    else:
+        return value
+
+
 if __name__ == "__main__":
     print (get_md5("http://jobbole.com".encode("utf-8")))
