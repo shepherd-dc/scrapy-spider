@@ -29,7 +29,7 @@ class ArticleSpiderItem(scrapy.Item):
     comment_nums = scrapy.Field()
     fav_nums = scrapy.Field()
     tags = scrapy.Field(
-        output_processor=Join()
+        output_processor=Join(separator=',')
     )
     content = scrapy.Field()
 
