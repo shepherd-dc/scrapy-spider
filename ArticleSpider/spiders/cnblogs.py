@@ -1,5 +1,6 @@
 import json
 import re
+from pathlib import Path
 from urllib import parse
 
 import requests
@@ -14,6 +15,10 @@ class CnblogsSpider(scrapy.Spider):
     name = 'cnblogs'
     allowed_domains = ['news.cnblogs.com']
     start_urls = ['http://news.cnblogs.com/']
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36"
+    }
 
     def parse(self, response):
         '''
@@ -41,7 +46,7 @@ class CnblogsSpider(scrapy.Spider):
         #     yield Request(url=parse.urljoin(response.url, next_url))
         next_url = response.xpath('// div[@class="pager"] // a[contains(text(), "Next >")] / @href').extract_first('')
         # 递归调用parse（默认callback为parse）继续处理下一页列表url
-        yield Request(url=parse.urljoin(response.url, next_url), callback=self.parse)
+        yield Request(url=parse.urljoin(response.url, next_url))
 
     def parse_detail(self, response):
         match_re = re.match(".*?(\d+)", response.url)
@@ -107,3 +112,59 @@ class CnblogsSpider(scrapy.Spider):
         article_item = item_loader.load_item()
 
         yield article_item
+
+
+    def start_requests(self):
+        zhihu_findUrl = 'https://www.zhihu.com/notifications'
+        if not Path('cnblogsCookies.json').exists():
+            self.login()  # 先执行login，保存cookies之后便可以免登录操作
+
+        # 毕竟每次执行都要登录还是挺麻烦的，我们要充分利用cookies的作用
+        # 从文件中获取保存的cookies
+        with open('cnblogsCookies.json', 'r', encoding='utf-8') as f:
+            list_cookies = json.loads(f.read())  # 获取cookies
+
+        # 把获取的cookies处理成dict类型
+        cookies_dict = dict()
+        for cookie in list_cookies:
+            # 在保存成dict时，我们其实只要cookies中的name和value，而domain等其他都可以不要
+            cookies_dict[cookie['name']] = cookie['value']
+
+        for url in self.start_urls:
+            yield Request(url=url, cookies=cookies_dict, headers=self.headers, dont_filter=True)
+
+    def login(self):
+        import time
+        from selenium import webdriver
+        from selenium.webdriver.chrome.options import Options
+        from selenium.webdriver.common.keys import Keys
+
+        chrome_options = Options()
+        chrome_options.add_argument("--disable-extensions")
+        chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
+
+        browser = webdriver.Chrome(executable_path="C:/scrapy/chromedriver.exe",  chrome_options=chrome_options)
+
+        # browser = webdriver.Chrome(executable_path='C:/scrapy/chromedriver.exe')
+        browser.get('https://account.cnblogs.com/signin')
+        time.sleep(3)  # 执行休眠3s等待浏览器的加载
+
+        browser.find_element_by_css_selector("input#LoginName").clear()
+        browser.find_element_by_css_selector("input#LoginName").send_keys("shepherd_nt")
+        browser.find_element_by_css_selector("input#Password").clear()
+        browser.find_element_by_css_selector("input#Password").send_keys("linfeng0328")
+        input("检查网页是否有验证码要输入，有就在网页输入验证码，输入完后，控制台回车；如果无验证码，则直接回车")
+        try:
+            browser.find_element_by_css_selector("#submitBtn").click()
+        except:
+            pass
+        print('yes')
+        # 通过上述的方式实现登录后，其实我们的cookies在浏览器中已经有了，我们要做的就是获取
+        cookies = browser.get_cookies()  # Selenium为我们提供了get_cookies来获取登录cookies
+        browser.close()  # 获取cookies便可以关闭浏览器
+        # 然后的关键就是保存cookies，之后请求从文件中读取cookies就可以省去每次都要登录一次的
+        # 当然可以把cookies返回回去，但是之后的每次请求都要先执行一次login没有发挥cookies的作用
+        jsonCookies = json.dumps(cookies)  # 通过json将cookies写入文件
+        with open('cnblogsCookies.json', 'w') as f:
+            f.write(jsonCookies)
+        print(cookies)
