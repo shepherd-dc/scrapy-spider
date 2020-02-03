@@ -5,6 +5,7 @@ from pathlib import Path
 
 import scrapy
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 
 class ZhihuSpider(scrapy.Spider):
@@ -43,8 +44,14 @@ class ZhihuSpider(scrapy.Spider):
     def loginZhihu():
         # 登录网址
         loginurl = 'https://www.zhihu.com/signin'
-        # 加载webdriver驱动，用于获取登录页面标签属性
-        driver = webdriver.Chrome(executable_path='C:/scrapy/chromedriver.exe')
+        # driver = webdriver.Chrome(executable_path='C:/scrapy/chromedriver.exe')
+        chrome_options = Options()
+        chrome_options.add_argument("--disable-extensions")
+        chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
+
+        # 加载webdriver驱动，避免反爬识别用cmd手动启动Chrome：
+        # C:\Program Files (x86)\Google\Chrome\Application>chrome.exe --remote-debugging-port=9222
+        driver = webdriver.Chrome(executable_path="C:/scrapy/chromedriver.exe",  chrome_options=chrome_options)
         # 加载页面
         driver.get(loginurl)
 
@@ -86,10 +93,10 @@ class ZhihuSpider(scrapy.Spider):
 
     def parse(self, response):
 
-        # 这里打印出https://www.zhihu.com/notifications页面中登录者的昵称验证带上cookies登录完成
-        print(response.xpath('//div[@class="top-nav-profile"]/a/span[@class="name"]/text()').extract_first())
+        # 这里打印出https://www.zhihu.com/notifications页面中通知中心带上cookies登录完成
+        print("登录成功: %s" % response.xpath('//div[@class="Card Notifications-Main"]//h1/text()').extract_first())
 
-        print("*" * 40)
+        print("*" * 100)
         # print("response text: %s" % response.text)
         print("response headers: %s" % response.headers)
         print("response meta: %s" % response.meta)

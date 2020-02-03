@@ -139,16 +139,17 @@ class CnblogsSpider(scrapy.Spider):
         from selenium.webdriver.chrome.options import Options
         from selenium.webdriver.common.keys import Keys
 
-        chrome_options = Options()
-        chrome_options.add_argument("--disable-extensions")
-        chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
+        # chrome_options = Options()
+        # chrome_options.add_argument("--disable-extensions")
+        # chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
+        #
+        # browser = webdriver.Chrome(executable_path="C:/scrapy/chromedriver.exe",  chrome_options=chrome_options)
 
-        browser = webdriver.Chrome(executable_path="C:/scrapy/chromedriver.exe",  chrome_options=chrome_options)
-
-        # browser = webdriver.Chrome(executable_path='C:/scrapy/chromedriver.exe')
+        browser = webdriver.Chrome(executable_path='C:/scrapy/chromedriver.exe')
         browser.get('https://account.cnblogs.com/signin')
         time.sleep(3)  # 执行休眠3s等待浏览器的加载
 
+        # browser.find_element_by_css_selector("input#LoginName").send_keys(Keys.CONTROL + "a")
         browser.find_element_by_css_selector("input#LoginName").clear()
         browser.find_element_by_css_selector("input#LoginName").send_keys("shepherd_nt")
         browser.find_element_by_css_selector("input#Password").clear()
