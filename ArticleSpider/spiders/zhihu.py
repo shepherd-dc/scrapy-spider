@@ -73,8 +73,7 @@ class ZhihuSpider(scrapy.Spider):
         #         "button[class='Button SignFlow-submitButton Button--primary Button--blue']").click()
 
         # 方式2 直接通过扫描二维码，如果不是要求全自动化，建议用这个，非常直接，毕竟我们这一步只是想保存登录后的cookies，至于用何种方式登录，可以不必过于计较
-        driver.find_element_by_css_selector(
-            ".SignFlow-qrcodeTab").click()
+        driver.find_element_by_css_selector(".SignFlow-qrcodeTab").click()
         input("请扫描页面二维码，并确认登录后，点击回车")  # 点击二维码手机扫描登录
 
         time.sleep(3)  # 同样休眠3s等待登录完成

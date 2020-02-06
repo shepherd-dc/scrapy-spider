@@ -73,24 +73,8 @@ class MysqlTwistedPipeline(object):
 
     def do_insert(self, cursor, item):
         # 执行具体的插入
-        insert_sql = '''
-                    insert into cnblogs_article(url_object_id, title, url, create_date, front_image_url, front_image_path, praise_nums, comment_nums, fav_nums, tags, content)
-                    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE fav_nums=VALUES(fav_nums)
-                '''
-        params = list()
-        params.append(item.get('url_object_id', ''))
-        params.append(item.get('title', ''))
-        params.append(item.get('url', ''))
-        params.append(item.get('create_date', ''))
-        front_image = ','.join(item.get('front_image_url', []))
-        params.append(front_image)
-        params.append(item.get('front_image_path', ''))
-        params.append(item.get('praise_nums', 0))
-        params.append(item.get('comment_nums', 0))
-        params.append(item.get('fav_nums', 0))
-        params.append(item.get('tags', ''))
-        params.append(item.get('content', ''))
-
+        # 根据不同的item 构建不同的sql语句并插入到mysql中
+        insert_sql, params = item.get_insert_sql()
         cursor.execute(insert_sql, tuple(params))
 
     def handle_error(self, failure, item, spider):
