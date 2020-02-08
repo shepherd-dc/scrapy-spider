@@ -56,7 +56,8 @@ ROBOTSTXT_OBEY = False
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
    'ArticleSpider.middlewares.RandomUserAgentMiddleware': 543,
-   'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None
+   'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
+   'ArticleSpider.middlewares.RandomProxyMiddleware': 6
 }
 
 USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
