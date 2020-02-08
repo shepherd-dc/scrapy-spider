@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-import datetime
 import os
 import pickle
+from datetime import datetime
 
 import scrapy
 from scrapy.linkextractors import LinkExtractor
@@ -17,9 +17,9 @@ class LagouSpider(CrawlSpider):
     start_urls = ['http://www.lagou.com/']
 
     rules = (
-        Rule(LinkExtractor(allow=(r'zhaopin/.*',)), follow=True),
-        Rule(LinkExtractor(allow=(r'gongsi/j\d+.html',)), follow=True),
-        Rule(LinkExtractor(allow=r'jobs/\d+.html'), callback='parse_job', follow=True)
+        # Rule(LinkExtractor(allow=(r'zhaopin/.*',)), follow=True),
+        # Rule(LinkExtractor(allow=(r'gongsi/j\d+.html',)), follow=True),
+        Rule(LinkExtractor(allow=r'jobs/\d+.html'), callback='parse_job', follow=False),
     )
 
     def parse_job(self, response):
@@ -29,10 +29,10 @@ class LagouSpider(CrawlSpider):
         item_loader.add_value("url", response.url)
         item_loader.add_value("url_object_id", get_md5(response.url))
         item_loader.add_css("salary", ".job_request .salary::text")
-        item_loader.add_xpath("job_city", "//*[@class='job_request']/p/span[2]/text()")
-        item_loader.add_xpath("work_years", "//*[@class='job_request']/p/span[3]/text()")
-        item_loader.add_xpath("degree_need", "//*[@class='job_request']/p/span[4]/text()")
-        item_loader.add_xpath("job_type", "//*[@class='job_request']/p/span[5]/text()")
+        item_loader.add_xpath("job_city", "//*[@class='job_request']//span[2]/text()")
+        item_loader.add_xpath("work_years", "//*[@class='job_request']//span[3]/text()")
+        item_loader.add_xpath("degree_need", "//*[@class='job_request']//span[4]/text()")
+        item_loader.add_xpath("job_type", "//*[@class='job_request']//span[5]/text()")
 
         item_loader.add_css("tags", '.position-label li::text')
         item_loader.add_css("publish_time", ".publish_time::text")
