@@ -4,8 +4,11 @@
 #
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
+import time
+
 from fake_useragent import UserAgent
 from scrapy import signals
+from scrapy.http import HtmlResponse
 
 from tools.crawl_xila_ip import GetIP
 
@@ -131,3 +134,14 @@ class RandomProxyMiddleware(object):
         random_ip = get_ip.get_random_ip()
         print(random_ip)
         request.meta["proxy"] = random_ip
+
+
+class JSPageMiddleware(object):
+    #通过chromediver请求动态网页
+    def process_request(self, request, spider):
+        if spider.name == "cnblogs":
+            spider.browser.get(request.url)
+            time.sleep(3)
+            print ("访问:{0}".format(request.url))
+
+            return HtmlResponse(url=spider.browser.current_url, body=spider.browser.page_source, encoding="utf-8", request=request)

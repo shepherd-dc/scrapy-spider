@@ -5,7 +5,10 @@ from urllib import parse
 
 import requests
 import scrapy
-from scrapy import Request
+from pydispatch import dispatcher
+from scrapy import Request, signals
+from selenium import webdriver
+from w3lib.html import remove_tags
 
 from ArticleSpider.items import ArticleSpiderItem, ArticleItemLoader
 from ArticleSpider.utils import common
@@ -19,6 +22,15 @@ class CnblogsSpider(scrapy.Spider):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36"
     }
+
+    def __init__(self):
+        self.browser = webdriver.Chrome(executable_path='C:/scrapy/chromedriver.exe')
+        super(CnblogsSpider, self).__init__()
+        dispatcher.connect(self.spider_closed, signals.spider_closed)
+
+    def spider_closed(self):
+        print('spider closed')
+        self.browser.quit()
 
     def parse(self, response):
         '''
@@ -44,7 +56,7 @@ class CnblogsSpider(scrapy.Spider):
         # if next_url == 'Next >':
         #     next_url = response.css('.pager a:last-child::attr(href)').extract_first('')
         #     yield Request(url=parse.urljoin(response.url, next_url))
-        next_url = response.xpath('// div[@class="pager"] // a[contains(text(), "Next >")] / @href').extract_first('')
+        # next_url = response.xpath('// div[@class="pager"] // a[contains(text(), "Next >")] / @href').extract_first('')
         # 递归调用parse（默认callback为parse）继续处理下一页列表url
         # yield Request(url=parse.urljoin(response.url, next_url))
 
@@ -91,7 +103,10 @@ class CnblogsSpider(scrapy.Spider):
                           meta={"article_item": item_loader, "url": response.url}, callback=self.parse_nums)
 
     def parse_nums(self, response):
-        j_data = json.loads(response.text)
+        # j_data = json.loads(response.text)
+        page_source = response.text
+        j_str = remove_tags(page_source)
+        j_data = json.loads(j_str)
         # article_item = response.meta.get("article_item", "")
         item_loader = response.meta.get('article_item', '')
 

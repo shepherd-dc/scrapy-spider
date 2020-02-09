@@ -57,6 +57,7 @@ DOWNLOAD_DELAY = 3
 DOWNLOADER_MIDDLEWARES = {
    'ArticleSpider.middlewares.RandomUserAgentMiddleware': 543,
    'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
+   'ArticleSpider.middlewares.JSPageMiddleware': 2,
    'ArticleSpider.middlewares.RandomProxyMiddleware': 6
 }
 
@@ -73,7 +74,7 @@ RANDOM_UA_TYPE = 'random'
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
    'ArticleSpider.pipelines.ArticleSpiderPipeline': 300,
-   'ArticleSpider.pipelines.ArticleImagePipeline': 1,
+   # 'ArticleSpider.pipelines.ArticleImagePipeline': 1,
    # 'ArticleSpider.pipelines.JsonWithEncodingPipeline': 2,
    # 'ArticleSpider.pipelines.JsonExporterPipeline': 3,
    # 'ArticleSpider.pipelines.MysqlPipeline': 4,
