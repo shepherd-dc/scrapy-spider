@@ -27,6 +27,10 @@ class ZhihuSpider(scrapy.Spider):
         "HOST": "www.zhihu.com"
     }
 
+    custom_settings = {
+        "COOKIES_ENABLED": True
+    }
+
     # scrapy请求的开始时start_request
     def start_requests(self):
         zhihu_findUrl = 'https://www.zhihu.com/notifications'
